@@ -1,0 +1,30 @@
+schema: secured-api
+
+context: |
+  API REST en Java 21 con Spring Boot y Maven. H2 se utiliza para desarrollo local.
+  Arquitectura Controller → Service → Repository con DTOs HTTP.
+  Las especificaciones vigentes se encuentran en openspec/specs/.
+  Los contratos HTTP ejecutables se versionan en postman/.
+  Los artefactos de OpenSpec se redactan en español.
+
+rules:
+  proposal:
+    - Identificar el problema, las capacidades existentes afectadas, el alcance y los riesgos.
+    - Explicitar cambios en contratos externos, compatibilidad y decisiones pendientes, cuando corresponda.
+    - Definir criterios de aceptación de alto nivel verificables.
+  specs:
+    - Contrastar cada requisito con las especificaciones vigentes antes de clasificarlo como ADDED, MODIFIED o REMOVED.
+    - Incluir Scenarios observables, con casos positivos, negativos y de borde relevantes.
+    - No resolver unilateralmente ambigüedades sobre comportamiento, alcance o permisos.
+  design:
+    - Documentar las decisiones técnicas relevantes y las alternativas consideradas.
+    - Analizar integración, datos, API, permisos, errores, configuración y compatibilidad según el alcance del cambio.
+  security-review:
+    - Delimitar la superficie afectada de autenticación, autorización y exposición de datos.
+    - Vincular los riesgos relevantes con Scenarios y pruebas previstas.
+    - Registrar las decisiones de seguridad aún pendientes de revisión.
+  tasks:
+    - Derivar tareas implementables de requisitos, diseño y revisión de seguridad.
+    - Asegurar que cada Scenario tenga al menos una prueba automatizada identificable y trazable.
+    - Incluir comprobaciones de regresión y ejecución de las pruebas correspondientes.
+    - Prever la inspección del diff y la comparación del resultado con la propuesta aprobada.

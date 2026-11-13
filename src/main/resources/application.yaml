@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: requests-api
+  datasource:
+    embedded-database-connection: none
+  jpa:
+    open-in-view: false
+server:
+  port: 8080

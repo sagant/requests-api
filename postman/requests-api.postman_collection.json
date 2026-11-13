@@ -1,0 +1,278 @@
+{
+  "info": {
+    "name": "Requests API",
+    "description": "Colección de pruebas HTTP de la API de solicitudes. Ejecutar las peticiones del flujo principal en orden; el ID de la solicitud creada se reutiliza en las consultas posteriores.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "createdRequestId",
+      "value": "",
+      "type": "string",
+      "description": "Se actualiza después del POST válido; se usa para consultar detalle."
+    }
+  ],
+  "item": [
+    {
+      "name": "01 · Flujo principal (ejecutar en orden)",
+      "description": "Recorre creación, listado, detalle y resumen con el contrato vigente.",
+      "item": [
+        {
+          "name": "01 - Crear solicitud anónima (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Respuesta con ID, tipo y fecha\", function () {",
+                  "    pm.expect(body.id).to.be.a(\"number\");",
+                  "    pm.expect(body.type).to.eql(\"EQUIPMENT\");",
+                  "    pm.expect(body.createdAt).to.be.a(\"string\");",
+                  "});",
+                  "if (pm.response.code === 201 && body.id) { pm.collectionVariables.set(\"createdRequestId\", String(body.id)); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "requests"
+              ]
+            },
+            "description": "Crea una solicitud sin credenciales y guarda el ID para pasos siguientes.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Monitor adicional\",\n  \"description\": \"Solicito un monitor adicional para realizar tareas de desarrollo\",\n  \"type\": \"EQUIPMENT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 - Listar todas las solicitudes (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Listado JSON con la creada\", function () {",
+                  "    pm.expect(body).to.be.an(\"array\");",
+                  "    const expectedId = Number(pm.collectionVariables.get(\"createdRequestId\"));",
+                  "    pm.expect(body.some(item => item.id === expectedId)).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "requests"
+              ]
+            },
+            "description": "Lista global anónima. Debe incluir la solicitud recién creada."
+          },
+          "response": []
+        },
+        {
+          "name": "03 - Consultar detalle de la creada (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Es la solicitud creada\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.id).to.eql(Number(pm.collectionVariables.get(\"createdRequestId\")));",
+                  "    pm.expect(body.title).to.eql(\"Monitor adicional\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/{{createdRequestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "requests",
+                "{{createdRequestId}}"
+              ]
+            },
+            "description": "Depende de la variable createdRequestId almacenada por el POST."
+          },
+          "response": []
+        },
+        {
+          "name": "04 - Resumen global (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Total consistente con desglose\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.total).to.be.a(\"number\");",
+                  "    pm.expect(body.byType).to.have.all.keys(\"EQUIPMENT\", \"ACCESS\", \"OTHER\");",
+                  "    const subtotal = body.byType.EQUIPMENT + body.byType.ACCESS + body.byType.OTHER;",
+                  "    pm.expect(body.total).to.eql(subtotal);",
+                  "    pm.expect(body.total).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "requests",
+                "summary"
+              ]
+            },
+            "description": "Resumen sin filtros. Refleja todas las solicitudes."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 · Casos negativos",
+      "description": "El sistema inicial ya valida entradas y responde 404 ante recursos inexistentes.",
+      "item": [
+        {
+          "name": "05 - Título inválido (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Error con detalle\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "requests"
+              ]
+            },
+            "description": "Validación Bean Validation del endpoint de creación.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\",\n  \"description\": \"Solicito un monitor adicional para realizar tareas de desarrollo\",\n  \"type\": \"EQUIPMENT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06 - Detalle inexistente (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 Not Found\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Error con detalle\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/requests/999999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "requests",
+                "999999999"
+              ]
+            },
+            "description": "Comportamiento de la API ante un ID inexistente."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
